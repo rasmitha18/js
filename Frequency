@@ -1,0 +1,18 @@
+function mostFrequent(arr) {
+  let count = {};
+  let maxCount = 0;
+  let result = arr[0];
+
+  for (let num of arr) {
+    count[num] = (count[num] || 0) + 1;
+
+    if (count[num] > maxCount) {
+      maxCount = count[num];
+      result = num;
+    }
+  }
+
+  return result;
+}
+
+console.log(mostFrequent([2, 3, 2, 5, 3, 2, 4, 3, 3]));
