@@ -1,12 +1,22 @@
 function wait(ms) {
-  return new Promise((resolve,reject) => {
-    setTimeout(()=> {
-        resolve("done waiting!");
-    } ,ms)
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+function processOrder() {
+  wait(1000) 
+  .then(()=>{
+    console.log("order placed");
+    return wait(1000);
+  })
+  .then(()=>{
+    console.log("order shipped");
+    return wait(1000);
+  })
+  .then(()=>{
+    console.log("order delivered");
   })
 }
 
-wait(1000).then(message => {
-  console.log(message);
-});
-console.log("This prints first");
+processOrder();
