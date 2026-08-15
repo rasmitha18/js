@@ -1,0 +1,19 @@
+function riskyOperation(shouldFail) {
+  return new Promise((resolve, reject) => {
+    if (shouldFail) {
+      reject("Something went wrong");
+    } else {
+      resolve("Success!");
+    }
+  });
+}
+async function runOperation(shouldFail) {
+  try {
+    let result = await riskyOperation(shouldFail);
+    console.log(result); 
+  } catch (error) {
+    console.log("Caught an error:", error); 
+  }
+}
+runOperation(false);
+runOperation(true);
