@@ -1,0 +1,12 @@
+async function getMultipleUsers(ids) {
+  let fetchPromises = ids.map(id => fetch(`https://jsonplaceholder.typicode.com/users/${id}`));
+  let responses = await Promise.all(fetchPromises);
+
+  let jsonPromises = responses.map(response => response.json());
+  let users = await Promise.all(jsonPromises);
+
+  let names = users.map(user => user.name);
+  return names;
+}
+
+getMultipleUsers([1, 2, 3]).then(names => console.log(names));
