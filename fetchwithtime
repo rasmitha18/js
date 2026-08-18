@@ -1,0 +1,9 @@
+function fetchWithTimeout(url, ms) {
+  let timeoutPromise = new Promise((resolve, reject) => {
+    setTimeout(() => {
+      reject("request error!");
+    }, ms);
+  });
+
+  return Promise.race([fetch(url), timeoutPromise]);
+}
