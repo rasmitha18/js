@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GitHub User Lookup</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <input type="text" id="usernameInput" placeholder="Enter GitHub username">
+  <button id="searchBtn">Search</button>
+
+  <div id="result"></div>
+
+  <script>
+    const usernameInput = document.getElementById("usernameInput");
+    const searchBtn = document.getElementById("searchBtn");
+    const resultDiv = document.getElementById("result");
+
+    async function lookupUser(username) {
+      try {
+        const response = await fetch("https://api.github.com/users/" + username);
+        if (!response.ok) {
+          throw new Error("user not found");
+        }
+        const data = await response.json();
+
+        const repoResponse = await fetch(`https://api.github.com/users/${username}/repos`);
+        const repos = await repoResponse.json();
+
+        repos.sort((a, b) => b.stargazers_count - a.stargazers_count);
+        const topRepos = repos.slice(0, 3);
+
+        const repoListHTML = topRepos.map(repo => `<li>${repo.name} ( ${repo.stargazers_count})</li>`).join("");
+
+        resultDiv.innerHTML = `
+          <h2>${data.name}</h2>
+          <p>Bio: ${data.bio}</p>
+          <p>Public Repos: ${data.public_repos}</p>
+          <p>Followers: ${data.followers}</p>
+          <h3>Top Repos:</h3>
+          <ul>${repoListHTML}</ul>
+        `;
+
+      } catch (error) {
+        resultDiv.innerHTML = `<p>Error: ${error.message}</p>`;
+      }
+    }
+
+    searchBtn.addEventListener("click", () => {
+      const username = usernameInput.value;
+      lookupUser(username);
+    });
+  </script>
+</body>
+</html>
