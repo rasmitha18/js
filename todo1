@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Todo List</title>
+<style>
+  :root {
+    --bg: #12161c;
+    --panel: #1a1f28;
+    --panel-border: #2a3140;
+    --text: #d8dee9;
+    --text-dim: #7b8494;
+    --amber: #e0a458;
+    --amber-dim: #a97c40;
+    --green: #6fcf97;
+    --red: #d16969;
+    --mono: "JetBrains Mono", "Fira Code", "Consolas", "SF Mono", monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    display: flex;
+    justify-content: center;
+    padding: 64px 20px;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 480px;
+  }
+
+  .eyebrow {
+    color: var(--amber-dim);
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+  }
+  h1::before {
+    content: "$ ";
+    color: var(--amber);
+  }
+
+  .subhead {
+    color: var(--text-dim);
+    font-size: 13px;
+    margin: 0 0 24px 0;
+  }
+
+  .add-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  #taskInput {
+    flex: 1;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    padding: 12px 14px;
+    border-radius: 6px;
+    outline: none;
+  }
+  #taskInput::placeholder { color: var(--text-dim); }
+  #taskInput:focus { border-color: var(--amber-dim); }
+
+  #addBtn {
+    background: var(--amber);
+    color: #1a1206;
+    border: none;
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 12px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  #addBtn:hover { background: #eab578; }
+  #addBtn:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+  .task-count {
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  #taskList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  #taskList li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    padding: 10px 12px;
+  }
+
+  .task-text {
+    flex: 1;
+    font-size: 14px;
+    word-break: break-word;
+  }
+
+  /* completed state — the key visual distinction */
+  #taskList li.completed {
+    opacity: 0.55;
+    border-color: #23282f;
+  }
+  #taskList li.completed .task-text {
+    text-decoration: line-through;
+    color: var(--text-dim);
+  }
+
+  .complete-btn, .delete-btn {
+    border: 1px solid var(--panel-border);
+    background: #161b22;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 13px;
+    width: 30px;
+    height: 30px;
+    border-radius: 5px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .complete-btn:hover { border-color: var(--green); color: var(--green); }
+  li.completed .complete-btn { border-color: var(--green); color: var(--green); }
+
+  .delete-btn:hover { border-color: var(--red); color: var(--red); }
+
+  .empty-msg {
+    color: var(--text-dim);
+    font-size: 13px;
+    text-align: center;
+    padding: 30px 0;
+    border: 1px dashed var(--panel-border);
+    border-radius: 6px;
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <div class="eyebrow">Daily Practice</div>
+    <h1>todo</h1>
+    <p class="subhead">Tasks are saved automatically — refresh and they'll still be here.</p>
+
+    <div class="add-row">
+      <input type="text" id="taskInput" placeholder="Add a task" autocomplete="off">
+      <button id="addBtn">Add</button>
+    </div>
+
+    <p class="task-count" id="taskCount"></p>
+    <ul id="taskList"></ul>
+  </div>
+
+  <script>
+    const taskInput = document.getElementById("taskInput");
+    const addBtn = document.getElementById("addBtn");
+    const taskList = document.getElementById("taskList");
+    const taskCount = document.getElementById("taskCount");
+
+    // ---- STATE ----
+    // Load from localStorage, or start empty if nothing was ever saved.
+    let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+    // ---- SAVE ----
+    function save() {
+      localStorage.setItem("tasks", JSON.stringify(tasks));
+    }
+
+    // ---- RENDER ----
+    // Rebuilds the entire <ul> from the current `tasks` array.
+    // Called after every add / complete / delete so the screen matches the data.
+    function render() {
+      if (tasks.length === 0) {
+        taskList.innerHTML = `<li class="empty-msg" style="border:none;background:none;">No tasks yet — add one above.</li>`;
+        taskCount.textContent = "";
+        return;
+      }
+
+      taskList.innerHTML = tasks.map(task => `
+        <li class="${task.done ? 'completed' : ''}" data-id="${task.id}">
+          <button class="complete-btn" data-id="${task.id}" title="Mark complete">✓</button>
+          <span class="task-text">${task.text}</span>
+          <button class="delete-btn" data-id="${task.id}" title="Delete">✕</button>
+        </li>
+      `).join("");
+
+      const doneCount = tasks.filter(t => t.done).length;
+      taskCount.textContent = `${doneCount} / ${tasks.length} complete`;
+    }
+
+    // ---- ADD ----
+    function addTask() {
+      const text = taskInput.value.trim();
+      if (!text) return; // ignore empty input
+
+      tasks.push({
+        id: Date.now(),   // Date.now() gives a unique-enough number (ms since 1970) — simple unique ID
+        text: text,
+        done: false
+      });
+
+      taskInput.value = "";
+      save();
+      render();
+    }
+
+    addBtn.addEventListener("click", addTask);
+    taskInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") addTask();
+    });
+
+    // ---- COMPLETE / DELETE (event delegation) ----
+    // Instead of attaching a listener to every button (which would be lost
+    // every time render() wipes and rebuilds the <li> elements), we attach
+    // ONE listener to the parent <ul>, which never gets destroyed. We then
+    // check WHAT was actually clicked using event.target.
+    taskList.addEventListener("click", (e) => {
+      const id = Number(e.target.dataset.id); // read the data-id off whatever was clicked
+      if (!id) return; // click landed somewhere without a data-id (e.g. empty-state text)
+
+      if (e.target.classList.contains("complete-btn")) {
+        const task = tasks.find(t => t.id === id);
+        task.done = !task.done; // toggle
+        save();
+        render();
+      }
+
+      if (e.target.classList.contains("delete-btn")) {
+        tasks = tasks.filter(t => t.id !== id); // keep everything except this one
+        save();
+        render();
+      }
+    });
+
+    // ---- INITIAL RENDER ----
+    // Draw whatever was loaded from localStorage as soon as the page opens.
+    render();
+  </script>
+</body>
+</html>
