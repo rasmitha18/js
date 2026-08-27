@@ -1,0 +1,11 @@
+const people = ["Alice", "Bob", "Carol"];
+
+const items = [
+  { name: "Pizza (shared)",   price: 30, sharedBy: ["Alice", "Bob", "Carol"] },
+  { name: "Alice's Salad",    price: 12, sharedBy: ["Alice"] },
+  { name: "Bob's Steak",      price: 25, sharedBy: ["Bob"] },
+  { name: "Garlic Bread (shared)", price: 8, sharedBy: ["Bob", "Carol"] }
+];
+
+const taxRate = 0.08;   
+const tipRate = 0.15;   
